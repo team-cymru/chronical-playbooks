@@ -1,1 +1,1 @@
-# chronical-playbooks
+# chronicle-playbooks
