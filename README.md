@@ -9,16 +9,12 @@ These automated playbooks can be used as a reference to generate a custom workfl
 Importing a playbook into any SecOps instance is a very straight-forward task:
 
 - Download the `.zip` file of the playbook that needs to be imported. This file would also contain all the blocks that are used in the playbook.
-
-TODO: Update the screenshot once the playbooks are added
 ![Download ZIP](<./screenshots/Download ZIP.png>)
 
 - Open the SecOps instance. From the sidebar, navigate to **Response > Playbooks** section.
-
 ![Sidebar - Playbooks](<./screenshots/Playbook Section.png>)
 
 - Click on the **three dots** icon at the top of the Playbooks, and then click on **Import**.
-
 ![Import Playbook](<./screenshots/Import Playbook.png>)
 
 - Select the `.zip` file downloaded earlier.
