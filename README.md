@@ -1,6 +1,6 @@
 # Google SecOps Playbooks
 
-This repository contains the sample playbooks that uses the **Team Cymru Scout** integration in **Google SecOps SOAR** platform to gather intel and perform steps based on this intel.
+This repository contains the sample playbooks that uses the **TeamCymruScout** integration in **Google SecOps SOAR** platform to gather intel and perform steps based on this intel.
 
 These automated playbooks can be used as a reference to generate a custom workflow to fulfill your needs.
 
@@ -21,6 +21,8 @@ Importing a playbook into any SecOps instance is a very straight-forward task:
 
 The playbooks stored in the file would be imported. We can access these under the **Imported Playbooks** folder. These playbooks and blocks can be moved to any other folder of our choice.
 
+**NOTE**: As the trigger of every playbook is set to run on all ingested alerts into SecOps instance, the imported playbooks are disabled by default. User can easily enable any playbook by simply cliking on the toggle button beside the playbook name. ([Reference](https://cloud.google.com/chronicle/docs/soar/respond/working-with-playbooks/whats-on-the-playbooks-screen#:~:text=At%20the%20top%20segment%20of%20the%20playbook%20designer%20pane%2C%20you%20can%20use%20the%20horizontal%20toggling%20button%20to%20enable%20or%20disable%20the%20playbook.))
+
 ## Documentation
 
 - [Playbooks](#playbooks)
@@ -28,6 +30,8 @@ The playbooks stored in the file would be imported. We can access these under th
   - [Cache IP Details](#cache-ip-details)
   - [Get Domain Certs](#get-domain-certs)
   - [Suspicious Tags](#suspicious-tags)
+  - [Playbook with Views](#playbook-with-views)
+  - [Enrich Peers Info](#enrich-peers-info)
 - [Blocks](#blocks)
   - [Is IP Suspicious](#is-ip-suspicious)
   - [Block IP](#block-ip)
@@ -46,7 +50,7 @@ Playbooks are a feature in Google Security Operations (SecOps) that can be used 
 
 #### Block Suspicious IP
 
-This playbook uses Team Cymru Scout's intelligence to determine the maliciousness of an input IP address, and based on this information, the case is closed, or raised to an incident.
+This playbook uses TeamCymruScout's intelligence to determine the maliciousness of an input IP address, and based on this information, the case is closed, or raised to an incident.
 
 ![Playbook - Block Suspicious IP](<./screenshots/playbooks/Block Suspicious IP.png>)
 
@@ -106,7 +110,7 @@ This playbook uses **custom lists** as a cache storage for storing the details o
   - This action would be run only if the cached data is stale (`Less than 24H` condition is `false`). In this case, we would remove the cached data from the custom list.
 
 - Get Fresh Record from Team Cymru Scout (action)
-  - This action (Get IP Details) is a part of Team Cymru Scout integration. It expects a comma-separated string of IP addresses as input, and returns details information about these IPs in JSON format.
+  - This action (Get IP Details) is a part of TeamCymruScout integration. It expects a comma-separated string of IP addresses as input, and returns details information about these IPs in JSON format.
   - In this playbook, we would run this and the subsequent actions only if any one of these conditions:
     - The condition `Are there matches ?` is `false` (Cache miss). 
     - The condition `Less than 24H` is `false` (Cache is stale).
@@ -130,7 +134,7 @@ This playbook allows users to get information about the certificates assigned to
 **Flow**:
 
 - PDNS Domain Query (action)
-  - This action (Advanced Query) is a part of Team Cymru Scout integration.
+  - This action (Advanced Query) is a part of TeamCymruScout integration.
   - It expects a domain name that falls within the convention of [Scout Query Language](https://scout.cymru.com/docs/scout/ultimate#help.scout.index-panel).
   - This action returns the details of the IPs that match the query passed as input.
 
@@ -153,7 +157,7 @@ This playbook allows users to enter the tags they consider suspicious, and if th
 **Flow**:
 
 - Extract Tags for IP (action)
-  - This action (Extract Tags) is a part of Team Cymru Scout integration.
+  - This action (Extract Tags) is a part of TeamCymruScout integration.
   - It expects a single IP address and Tags as inputs. From Team Cymru Scout platform, the tags associated with the given IP, and its peers would be fetched and compared with the provided tags. In case any match is found, the action would output `true`. If no match is found, the output would be `false`.
 
 - Matching Tags Found ? (condition)
@@ -166,6 +170,52 @@ This playbook allows users to enter the tags they consider suspicious, and if th
   - This action is provided by SecOps with the Siemplify integration. It simply closes the case on which this playbook is run, with an appropriate comment.
   - This action would be executed in case the `Matching Tags Found ?` condition is `false`.
 
+#### Playbook with Views
+
+This playbook enriches all the IP entities present in the alert and generates a set of widgets (view) that can be viewed on the Alert Overview page.
+
+![Playbook - Playbook with Views](<./screenshots/playbooks/Playbook with Views.png>)
+
+**Flow**:
+
+- Enrich IPs (action)
+  - This action (Enrich IPs) is a part of TeamCymruScout integration.
+  - This action collects all the IP entities and enriches them with their details from Team Cymru Scout. The enriched data include the rating and tags for each IP entity.
+
+**View**
+
+![Views - Playbook with Views](<./screenshots/playbooks/Views - Playbook with Views.png>)
+
+- Team Cymru Playbook
+  - **Enriched IPs - Team Cymru (JSON)**: Displays the JSON response received from Team Cymru Scout platform for the IP entities.
+  - **Entities Highlights**: Highlights all the entities present in the alert. For each entity, user can views the details and the fields enriched by TeamCymruScout integration (fields start with TCS_).
+  - **Enriched IPs (HTML - Table)**: This widget displays the IP entities along with their ratings and last enriched time, in a tabular format.
+
+
+#### Enrich Peers Info
+
+This playbook enriches all the IP entities present in the alert and generates an HTML table widget (view) that can be viewed on the Alert Overview page.
+
+![Playbook - Enrich Peers Info](<./screenshots/playbooks/Enrich Peers Info.png>)
+
+**Flow**:
+
+- Get Peers Info (action)
+  - This action (Get Peers Info) is a part of TeamCymruScout integration.
+  - This action collects all the IP entities and fetches the detailed peers information for each IP entity from Team Cymru Scout.
+
+**View**
+
+![View - Enrich Peers Info](<./screenshots/playbooks/Views - Enrich Peers Info.png>)
+
+- Peers Info
+  - **Peers Info - Team Cymru Scout (HTML - Table)**: This widget displays the IP entities along with their peer information, in a tabular format. The details include:
+    - Source IP address
+    - Peer IP address
+    - Event count
+    - Protcol used for connection with each peer IP
+    - Tags associated with peer IP address
+    - Ports used in the source IP for connection with peer IP
 ---
 
 ### Blocks
@@ -185,7 +235,7 @@ IP Addresses - Comma-separated string of IP Addresses.
 **Flow:**
 
 - List IP Summary (action)
-  - This action is a part of Team Cymru Scout integration. It accepts a comma-separated string of IPs and a Limit parameter.
+  - This action is a part of TeamCymruScout integration. It accepts a comma-separated string of IPs and a Limit parameter.
   - The summary information for each IP would be fetched and the cumulative response will be returned as JSON output.
 
 - Extract Overall Ratings (action)
@@ -268,7 +318,7 @@ Time difference between the input timestamp and current time, in seconds.
 
     Suppose, for the playbook [Block Suspicious IP](#block-suspicious-ip), ideally, we would want to pass multiple IP addresses in the input. For each IP, based on its maliciousness received from Team Cymru Scout, we should be able to create a ticket in the ServiceNow platform (using the `Block IP` block). But due to the limitation of SecOps, we cannot iterate through the maliciousness of IPs and check the condition `Is IP Suspicious ?`. Hence, we rely on only the first IP address from the list.
 
-2. For actions like `Extract Tags`, we expect only a single IP address. Hence, in case when multiple IPs are passed as input, the action would fail and throw error, indicating that the input is an invalid IP address. This error can be avoided by manipulating the playbook to only pass a single IP address in the input to such actions. The possible inputs for each action of Team Cymru Scout integration can be found from the User Guide.
+2. For actions like `Extract Tags`, we expect only a single IP address. Hence, in case when multiple IPs are passed as input, the action would fail and throw error, indicating that the input is an invalid IP address. This error can be avoided by manipulating the playbook to only pass a single IP address in the input to such actions. The possible inputs for each action of TeamCymruScout integration can be found from the User Guide.
 
 ## Troubleshooting
 
@@ -277,9 +327,10 @@ In case of any failures when running any playbook, we can debug the same by runn
 ## References
 
 - Google SecOps playbooks - [Documentation](https://cloud.google.com/chronicle/docs/secops/google-secops-soar-toc#work-with-playbooks)
+- Create views with playbooks - [Documentation](https://cloud.google.com/chronicle/docs/soar/respond/working-with-playbooks/define-customized-alert-views-from-playbook-designer)
 - Limitations around for-loop usage in playbooks:
   - [Cycle over a list](https://www.googlecloudcommunity.com/gc/SOAR-Forum/Cycling-over-a-list-in-a-playbook/m-p/642352)
   - [Iterate through a JSON list](https://www.googlecloudcommunity.com/gc/SOAR-Forum/Iterate-through-a-json-list/m-p/821359#M2891)
   - [Looping in Playbooks](https://www.googlecloudcommunity.com/gc/SOAR-Forum/Loop-in-a-PB-through-a-list-fetched-using-http-get-connector/m-p/639073)
   - [Functions that require single input](https://www.googlecloudcommunity.com/gc/SOAR-Forum/Functions-that-require-single-input/m-p/639027)
-- TODO: Add link to Team Cymru Scout user guide
+- TODO: Add link to TeamCymruScout user guide
