@@ -9,19 +9,17 @@ These automated playbooks can be used as a reference to generate a custom workfl
 Importing a playbook into any SecOps instance is a very straight-forward task:
 
 - Download the `.zip` file of the playbook that needs to be imported. This file would also contain all the blocks that are used in the playbook.
-![Download ZIP](<./screenshots/Download ZIP.png>)
+  ![Download ZIP](<./screenshots/Download ZIP.png>)
 
 - Open the SecOps instance. From the sidebar, navigate to **Response > Playbooks** section.
-![Sidebar - Playbooks](<./screenshots/Playbook Section.png>)
+  ![Sidebar - Playbooks](<./screenshots/Playbook Section.png>)
 
 - Click on the **three dots** icon at the top of the Playbooks, and then click on **Import**.
-![Import Playbook](<./screenshots/Import Playbook.png>)
+  ![Import Playbook](<./screenshots/Import Playbook.png>)
 
 - Select the `.zip` file downloaded earlier.
 
 The playbooks stored in the file would be imported. We can access these under the **Imported Playbooks** folder. These playbooks and blocks can be moved to any other folder of our choice.
-
-**NOTE**: As the trigger of every playbook is set to run on all ingested alerts into SecOps instance, the imported playbooks are disabled by default. User can easily enable any playbook by simply cliking on the toggle button beside the playbook name. ([Reference](https://cloud.google.com/chronicle/docs/soar/respond/working-with-playbooks/whats-on-the-playbooks-screen#:~:text=At%20the%20top%20segment%20of%20the%20playbook%20designer%20pane%2C%20you%20can%20use%20the%20horizontal%20toggling%20button%20to%20enable%20or%20disable%20the%20playbook.))
 
 ## Documentation
 
@@ -45,8 +43,10 @@ The playbooks stored in the file would be imported. We can access these under th
 Playbooks are a feature in Google Security Operations (SecOps) that can be used to automatically perform actions on alerts/cases when triggered. Playbooks can be used to: Retrieve information about alerts, Remediate threats, Create tickets, and Manage toxic combinations and IAM recommendations.
 
 **Points to Note:**
+
 - `.zip` file for every playbook contains the playbook along with all the blocks used in that playbook.
 - Each playbook requires a trigger, which decides when the playbook would be run. For all the playbooks created, the Trigger is set as **All**. Users can update the Trigger conditions based on the requirements.
+- As the trigger of every playbook is set to run on all ingested alerts into SecOps instance, the imported playbooks are disabled by default. User can easily enable any playbook by simply cliking on the toggle button beside the playbook name. ([Reference](https://cloud.google.com/chronicle/docs/soar/respond/working-with-playbooks/whats-on-the-playbooks-screen#:~:text=At%20the%20top%20segment%20of%20the%20playbook%20designer%20pane%2C%20you%20can%20use%20the%20horizontal%20toggling%20button%20to%20enable%20or%20disable%20the%20playbook.))
 
 #### Block Suspicious IP
 
@@ -57,16 +57,20 @@ This playbook uses TeamCymruScout's intelligence to determine the maliciousness 
 **Flow**:
 
 - Is IP Suspicious (block)
+
   - This block checks whether the given IP address is malicious or not. More details can be found [here](#is-ip-suspicious).
 
 - Is IP Suspicious ? (condition)
+
   - This is a condition that determines if the previous block (Is IP Suspicious) returned output as `true` or not.
   - If the output is `true`, the branch with Block IP block would be executed. Otherwise, the branch to close the case would be executed.
 
 - Block IP (block)
+
   - This block would be executed in case the `Is IP Suspicious ?` condition is `true`. More details can be found [here](#block-ip).
 
 - Priority - Informative (action)
+
   - This action (Change Priority) is provided by SecOps with the Siemplify integration. It updates the priority of the current case to Informative, meaning that the case can be taken up with the least priority.
   - This action would be executed in case the `Is IP Suspicious ?` condition is `false`.
 
@@ -85,37 +89,45 @@ This playbook uses **custom lists** as a cache storage for storing the details o
 **Flow**:
 
 - Retrieve IP details from cache (action)
+
   - This action (Search Custom Lists) is a part of [Lists power-up](https://cloud.google.com/chronicle/docs/soar/marketplace/power-ups/lists#search-custom-list) provided by SecOps.
   - It searches whether an input text is present in any record of a custom list. Currently, we use the custom list named **TCS_ips** to store the IP details.
   - In case the text is present in any record of the custom list, the output of the action would be `true`. Otherwise, the output would be `false`. Also, a JSON output containing the matched record will be return as output.
 
 - Are there matches ? (condition)
+
   - This is a condition that determines if the previous action (Retrieve IP details from cache) returned output as `true` or not.
   - If the output of this condition is `true`, it means that the data for the IP has already been cached. However, it is not confirmed if this data is stale or not. In case the condition is not true, we must fetch the data from Team Cymru Scout.
 
 - Time difference (block)
+
   - This block computes the time difference between the current time and the last time the IP details were cached. More details can be found [here](#time-difference).
   - This block will be executed only if the previous condition `Are there matches ?` is `true`.
 
 - Less than 24H (condition)
+
   - This condition uses the output from the previous block (Time difference) and checks whether the time difference is less than 24 hours (24 * 60 * 60 seconds).
   - If the condition is `true`, we can simply output the stored JSON data. Otherwise, we must delete the existing data, as it is stale, and fetch the data from Team Cymru Scout. This latest data will be cached again.
 
 - Display JSON Result (action)
+
   - This action (Buffer) is a part of [Tools power-up](https://cloud.google.com/chronicle/docs/soar/marketplace/power-ups/tools#buffer) provided by SecOps. It can display output in a JSON format.
   - This action would be run only if the cached data is not stale (`Less than 24H` condition is `true`). It simply displays the input (cached data) as a JSON output.
 
 - Remove Old Record (action)
+
   - This action (Remove String from Custom List) is a part of [Lists power-up](https://cloud.google.com/chronicle/docs/soar/marketplace/power-ups/lists#remove-string-from-custom-list) provided by SecOps. It removes a string from a custom list.
   - This action would be run only if the cached data is stale (`Less than 24H` condition is `false`). In this case, we would remove the cached data from the custom list.
 
 - Get Fresh Record from Team Cymru Scout (action)
+
   - This action (Get IP Details) is a part of TeamCymruScout integration. It expects a comma-separated string of IP addresses as input, and returns details information about these IPs in JSON format.
   - In this playbook, we would run this and the subsequent actions only if any one of these conditions:
-    - The condition `Are there matches ?` is `false` (Cache miss). 
+    - The condition `Are there matches ?` is `false` (Cache miss).
     - The condition `Less than 24H` is `false` (Cache is stale).
 
 - Run JSONPath Query (action)
+
   - This action is a part of [Functions power-up](https://cloud.google.com/chronicle/docs/soar/marketplace-and-integrations/power-ups/functions#run-jsonpath-query) provided by SecOps. It can extract information out of a JSON input using JSONPath expressions.
   - From the API response received by the previous action (Get Fresh Record from Team Cymru Scout), this action extracts the `ip` value of the input IP.
 
@@ -134,6 +146,7 @@ This playbook allows users to get information about the certificates assigned to
 **Flow**:
 
 - PDNS Domain Query (action)
+
   - This action (Advanced Query) is a part of TeamCymruScout integration.
   - It expects a domain name that falls within the convention of [Scout Query Language](https://scout.cymru.com/docs/scout/ultimate#help.scout.index-panel).
   - This action returns the details of the IPs that match the query passed as input.
@@ -157,13 +170,16 @@ This playbook allows users to enter the tags they consider suspicious, and if th
 **Flow**:
 
 - Extract Tags for IP (action)
+
   - This action (Extract Tags) is a part of TeamCymruScout integration.
   - It expects a single IP address and Tags as inputs. From Team Cymru Scout platform, the tags associated with the given IP, and its peers would be fetched and compared with the provided tags. In case any match is found, the action would output `true`. If no match is found, the output would be `false`.
 
 - Matching Tags Found ? (condition)
+
   - This is a condition that checks if the previous action (Extract Tags for IP) is `true` or `false`.
 
 - Block IP (block)
+
   - This block would be executed in case the `Matching Tags Found ?` condition is `true`. More details can be found [here](#block-ip).
 
 - Close Case (action)
@@ -191,7 +207,6 @@ This playbook enriches all the IP entities present in the alert and generates a 
   - **Entities Highlights**: Highlights all the entities present in the alert. For each entity, user can views the details and the fields enriched by TeamCymruScout integration (fields start with TCS_).
   - **Enriched IPs (HTML - Table)**: This widget displays the IP entities along with their ratings and last enriched time, in a tabular format.
 
-
 #### Enrich Peers Info
 
 This playbook enriches all the IP entities present in the alert and generates an HTML table widget (view) that can be viewed on the Alert Overview page.
@@ -215,7 +230,8 @@ This playbook enriches all the IP entities present in the alert and generates an
     - Event count
     - Protcol used for connection with each peer IP
     - Tags associated with peer IP address
-    - Ports used in the source IP for connection with peer IP
+    - Server/dest ports used for connection with peer IP
+
 ---
 
 ### Blocks
@@ -235,10 +251,12 @@ IP Addresses - Comma-separated string of IP Addresses.
 **Flow:**
 
 - List IP Summary (action)
+
   - This action is a part of TeamCymruScout integration. It accepts a comma-separated string of IPs and a Limit parameter.
   - The summary information for each IP would be fetched and the cumulative response will be returned as JSON output.
 
 - Extract Overall Ratings (action)
+
   - This action is a part of [Functions power-up](https://cloud.google.com/chronicle/docs/soar/marketplace-and-integrations/power-ups/functions#run-jsonpath-query) provided by SecOps. It can extract information out of a JSON input using JSONPath expressions.
   - From the summary information received by the previous action, this action extracts the `overall_rating` value of the IPs.
 
@@ -267,9 +285,11 @@ IP Address - Suspicious/malicious IP that is to be blocked
 **Flow:**
 
 - Change Priority (action)
+
   - This action is provided by SecOps with the Siemplify integration. It updates the priority of the current case to Critical.
 
 - Raise Incident (action)
+
   - This action is provided by SecOps with the Siemplify integration. It raises the current case to an Incident. Incidents in SecOps are the positive true cases that need to be looked upon at priority.
 
 - Create ServiceNow Incident (action)
@@ -294,14 +314,17 @@ input_ms_time - Time in milliseconds which is to be compared with current time.
 **Flow:**
 
 - Convert ms to seconds (action)
+
   - This action (Math Arithmetic) is a part of [Functions power-up](https://cloud.google.com/chronicle/docs/soar/marketplace-and-integrations/power-ups/functions#math-arithmetic) provided by SecOps. It can perform arithmetic operations on input values.
   - In this block, this action is used to simply convert the input time in milliseconds to seconds.
 
 - Convert seconds to integer (action)
+
   - This action (Math Functions) is a part of [Functions power-up](https://cloud.google.com/chronicle/docs/soar/marketplace-and-integrations/power-ups/functions#math-functions) provided by SecOps. It can perform basic math operations like type conversions, finding absolute value, etc.
   - In this block, this action is used to round the seconds to integer returned in the previous action.
 
 - Convert Time Format (action)
+
   - This action (Convert Time Format) is a part of [Functions power-up](https://cloud.google.com/chronicle/docs/soar/marketplace-and-integrations/power-ups/functions#math-convert-time-format) provided by SecOps. It can convert time from one format to another.
   - In this block, this action is used to convert the seconds to the following datetime format: `YYYY-MM-DD HH:mm:ss`.
 
@@ -314,6 +337,7 @@ input_ms_time - Time in milliseconds which is to be compared with current time.
 Time difference between the input timestamp and current time, in seconds.
 
 ### Known Issues
+
 1. Currently, playbooks in Google SecOps do not support for-loop mechanism. Hence, in blocks like [Is IP Suspicious](#is-ip-suspicious), we do get information about multiple IP addresses, but we consider the maliciousness of only the first IP address as the output. The reason for this can be considered using the following example:
 
     Suppose, for the playbook [Block Suspicious IP](#block-suspicious-ip), ideally, we would want to pass multiple IP addresses in the input. For each IP, based on its maliciousness received from Team Cymru Scout, we should be able to create a ticket in the ServiceNow platform (using the `Block IP` block). But due to the limitation of SecOps, we cannot iterate through the maliciousness of IPs and check the condition `Is IP Suspicious ?`. Hence, we rely on only the first IP address from the list.
