@@ -357,4 +357,4 @@ In case of any failures when running any playbook, we can debug the same by runn
   - [Iterate through a JSON list](https://www.googlecloudcommunity.com/gc/SOAR-Forum/Iterate-through-a-json-list/m-p/821359#M2891)
   - [Looping in Playbooks](https://www.googlecloudcommunity.com/gc/SOAR-Forum/Loop-in-a-PB-through-a-list-fetched-using-http-get-connector/m-p/639073)
   - [Functions that require single input](https://www.googlecloudcommunity.com/gc/SOAR-Forum/Functions-that-require-single-input/m-p/639027)
-- TODO: Add link to TeamCymruScout user guide
+- TeamCymruScout SecOps SOAR Integration - [User Guide](https://593d8195-76f8-42f5-aea7-f94bc22a04f5.usrfiles.com/ugd/593d81_803fe1e082bc48309f85dae80f8aea9d.pdf)
